@@ -1,6 +1,6 @@
 {
   "name": "@illager_aris/dsh-init",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "DSH slash command /init: sends the agent a compact prompt to create or update AGENTS.md for the current repository.",
   "type": "module",
   "main": "index.js",
