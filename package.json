@@ -1,0 +1,55 @@
+{
+  "name": "@illager_aris/dsh-init",
+  "version": "0.1.0",
+  "description": "DSH slash command /init: sends the agent a compact prompt to create or update AGENTS.md for the current repository.",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "lib",
+    "prompt.md",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg"
+  ],
+  "license": "MIT",
+  "author": "illagerCPR",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/illagerCPR/dsh-init.git"
+  },
+  "homepage": "https://github.com/illagerCPR/dsh-init#readme",
+  "bugs": {
+    "url": "https://github.com/illagerCPR/dsh-init/issues"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "cordis",
+    "plugin",
+    "init",
+    "agents-md",
+    "slash-command",
+    "instructions"
+  ],
+  "engines": {
+    "dsh": ">=0.2.1-rc.3 <0.3.0-0",
+    "node": ">=22.14"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}

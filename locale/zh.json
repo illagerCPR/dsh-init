@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "AGENTS.md 初始化",
+    "description": "提供 /init 命令：向智能体发送一份精简提示词，为当前仓库创建或更新 AGENTS.md。"
+  }
+}

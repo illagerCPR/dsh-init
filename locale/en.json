@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "AGENTS.md Init",
+    "description": "Adds /init, which sends the agent a compact prompt to create or update AGENTS.md for the current repository."
+  }
+}

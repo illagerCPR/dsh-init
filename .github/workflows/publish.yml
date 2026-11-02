@@ -1,0 +1,93 @@
+# Publish to npm from a signed tag.
+#
+# The first release cannot use a trusted publisher (there is no package to
+# configure yet), so 0.1.0 is published locally. After that, every `v*` tag is
+# published here through OIDC: this workflow stores no npm token, and the
+# provenance statement ties the tarball to this repository and commit.
+#
+# npm setup, once: package settings -> Trusted Publisher -> GitHub Actions,
+# repository `illagerCPR/dsh-init`, workflow filename `publish.yml`.
+name: publish
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
+      # A tag that disagrees with the manifest would publish a version nobody
+      # tagged, and a version that already exists means this tag is history, not
+      # a release: the second case is a no-op, the first one fails.
+      - name: Check the tag against the manifest
+        id: check
+        run: |
+          set -eu
+          name="$(node -p "require('./package.json').name")"
+          version="$(node -p "require('./package.json').version")"
+          tag="${GITHUB_REF_NAME#v}"
+          if [ "$tag" != "$version" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} does not match package.json ${version}"
+            exit 1
+          fi
+          if npm view "${name}@${version}" version >/dev/null 2>&1; then
+            echo "${name}@${version} is already on the registry; nothing to publish"
+            echo "publish=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=yes" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run tests
+        if: steps.check.outputs.publish == 'yes'
+        run: npm test
+
+      # `files` decides what users actually install; assert the runtime pieces
+      # are in the tarball instead of trusting the dry-run output by eye.
+      - name: Check the packed files
+        if: steps.check.outputs.publish == 'yes'
+        run: |
+          npm pack --dry-run --json > pack.json
+          node - <<'NODE'
+          const fs = require('node:fs')
+          const parsed = JSON.parse(fs.readFileSync('pack.json', 'utf8'))
+          // npm 9-11 prints an array; npm 12+ prints an object keyed by package name.
+          const pack = Array.isArray(parsed) ? parsed[0] : Object.values(parsed)[0]
+          const files = new Set(pack.files.map((file) => file.path))
+          const required = [
+            'index.js',
+            'lib/prompt.js',
+            'prompt.md',
+            'cordis.patch.yml',
+            'locale/en.json',
+            'locale/zh.json',
+            'icon.svg',
+            'LICENSE',
+            'README.md',
+          ]
+          const missing = required.filter((name) => !files.has(name))
+          if (missing.length > 0) {
+            console.error(`missing from the npm tarball: ${missing.join(', ')}`)
+            process.exit(1)
+          }
+          console.log(`packed ${files.size} files`)
+          NODE
+
+      - name: Publish with provenance
+        if: steps.check.outputs.publish == 'yes'
+        run: npm publish --provenance --access public

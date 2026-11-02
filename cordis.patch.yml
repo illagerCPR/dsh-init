@@ -1,0 +1,6 @@
+# Bundle patch for @illager_aris/dsh-init.
+# One Host row registers the global /init command in the profile's command
+# registry; nothing here is per-agent or per-preset.
+- insert:
+    - id: dsh-init
+      name: '@illager_aris/dsh-init'
